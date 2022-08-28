@@ -100,7 +100,85 @@ summary(data)
 
 
 ######################################################################
-               ### Reducing Factor Levels ###
+
+### HighBP ###
+ggplot(data = data,
+       mapping = aes(x= HighBP)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+### HighChol ###
+ggplot(data = data,
+       mapping = aes(x= HighChol)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+### CholCheck ###  ///
+ggplot(data = data,
+       mapping = aes(x= CholCheck)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+### Smoker ###
+ggplot(data = data,
+       mapping = aes(x= Smoker)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+
+### Stroke ###  ///
+ggplot(data = data,
+       mapping = aes(x= Stroke)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+### HeartDiseaseorAttack ###  ///
+ggplot(data = data,
+       mapping = aes(x= HeartDiseaseorAttack)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+### PhysActivity ###  /
+ggplot(data = data,
+       mapping = aes(x= PhysActivity)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+
+### Fruits ###  
+ggplot(data = data,
+       mapping = aes(x= Fruits)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+### Veggies ###  /
+ggplot(data = data,
+       mapping = aes(x= Veggies)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+### HvyAlcoholConsump ###  ///
+ggplot(data = data,
+       mapping = aes(x= HvyAlcoholConsump)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+### AnyHealthcare ###  ///
+ggplot(data = data,
+       mapping = aes(x= AnyHealthcare)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+### DiffWalk ###  //
+ggplot(data = data,
+       mapping = aes(x= DiffWalk)) +
+  geom_bar(position = "dodge")+
+  theme_bw()
+
+
+
+
+                    ### Reducing Factor Levels ###
 
 
 
@@ -141,8 +219,8 @@ levels(data$Age) <- c("18 to 24", "25 to 29", "30 to 34", "35 to 39", "40 to 44"
 
 
 levels(data$Age) <- c("18 to 34", "18 to 34", "18 to 34", "35 to 39", "40 to 44", "45 to 49", "50 to 54","55 to 59","60 to 64","65 to 69","70 to 74","75 to 79","80 or older")
-levels(data$Age) <- c("18 to 34", "35 to 39", "40 to 44", "45 to 49","50 to 54","55 to 59","60 to 64","65 to 69","70 to 74","75 to older","75 to older")
-levels(data$Age) <- c("18 to 34", "35 to 44", "35 to 44", "45 to 49","50 to 54","55 to 59","60 to 64","65 to 69","70 to 74","75 to older","75 to older")
+levels(data$Age) <- c("18 to 34", "35 to 39", "40 to 44", "45 to 49","50 to 54","55 to 59","60 to 64","65 to 69","70 to 74","75 or older","75 or older")
+levels(data$Age) <- c("18 to 34", "35 to 44", "35 to 44", "45 to 49","50 to 54","55 to 59","60 to 64","65 to 69","70 to 74","75 or older","75 or older")
 
 
 ggplot(data = data,
@@ -193,5 +271,234 @@ ggplot(data = data,
        mapping = aes(x= Income)) +
   geom_bar(position = "dodge")+
   theme_bw()
+
+
+######################################################################
+                    ### Feature importance ###
+
+library(ggplot2)
+
+#### HighBP ###  
+ggplot(data,
+       mapping = aes(x=HighBP, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# veci broj dijabeticara sa viskom pritiksom
+# zavise
+
+
+
+### HIghChol ###
+ggplot(data,
+       mapping = aes(x=HighChol, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# veci broj dijabeticara sa holesterolom
+# zavise
+
+
+
+### CholCheck ###    
+# no - cholesterol check in 5 years 
+# yes - cholesterol check in 5 years
+ggplot(data,
+       mapping = aes(x=CholCheck, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# zavise
+
+
+
+### BMI ###     Body Mass Index: 12 - 98
+ggplot(data,
+       mapping = aes(x=BMI, fill=Diabetes))+
+  geom_density(alpha=0.7) +
+  theme_light()
+# veci BMI za Yes
+# zavise
+
+
+
+### Smoker ###    Have you smoked at least 100 cigarettes in your entire life? [Note: 5 packs = 100 cigarettes]
+ggplot(data,
+       mapping = aes(x=Smoker, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# --
+chisq.test(data$Diabetes, data$Smoker)
+#  p < 0.05  
+
+
+### Stroke ###
+ggplot(data,
+       mapping = aes(x=Stroke, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+
+chisq.test(data$Diabetes, data$Stroke)
+#  p < 0.05 -
+
+
+
+### HeartDiseaseorAttack ###   coronary  heart disease (CHD) or myocardial infarction (MI)
+ggplot(data,
+       mapping = aes(x=HeartDiseaseorAttack, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+
+chisq.test(data$Diabetes, data$HeartDiseaseorAttack)
+#  p < 0.05  -
+
+
+
+### PhysActivity ###  physical activity in past 30 days - not including job
+ggplot(data,
+       mapping = aes(x=PhysActivity, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# zavise
+chisq.test(data$Diabetes, data$PhysActivity)
+#  p < 0.05 
+
+
+
+### Fruits ###   Consume Fruit 1 or more times per day
+ggplot(data,
+       mapping = aes(x=Fruits, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+
+chisq.test(data$Diabetes, data$Fruits)
+#  p < 0.05  zavise
+
+
+
+### Veggies ###    Consume Vegetables 1 or more times per day
+ggplot(data,
+       mapping = aes(x=Veggies, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+
+chisq.test(data$Diabetes, data$Veggies)
+#  p < 0.05  zavise
+
+
+
+### HvyAlcoholConsump ###  Heavy drinkers (adult men having more than 14 drinks per week and adult women having more than 7 drinks per week)
+ggplot(data,
+       mapping = aes(x=HvyAlcoholConsump, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# ne zavise
+
+chisq.test(data$Diabetes, data$HvyAlcoholConsump)
+#  p < 0.05?
+
+
+
+### AnyHealthcare ###   Have any kind of health care coverage, including health insurance, prepaid plans such as HMO, etc.
+ggplot(data,
+       mapping = aes(x=AnyHealthcare, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# -
+
+chisq.test(data$Diabetes, data$AnyHealthcare)
+#  p < 0.05  
+
+
+
+### NoDocbcCost ###   Was there a time in the past 12 months when you needed to see a doctor but could not because of cost?
+ggplot(data,
+       mapping = aes(x=NoDocbcCost, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# - 
+chisq.test(data$Diabetes, data$NoDocbcCost)
+#  p < 0.05  
+
+
+
+### GenHlth ###   Would you say that in general your health is: scale 1-5 1 = excellent 2 = very good 3 = good 4 = fair 5 = poor
+ggplot(data,
+       mapping = aes(x=GenHlth, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# zavisee
+
+
+
+### MentHlth ###  Now thinking about your mental health, which includes stress, depression, and problems with emotions, for how many days during the past 30 days was your mental health not good?
+ggplot(data,
+       mapping = aes(x=MentHlth, fill=Diabetes))+
+  geom_density(alpha=0.7) +
+  theme_light()
+
+kruskal.test(Diabetes ~ MentHlth, data = data)
+# p < 0.05 zavise
+
+
+
+### PhysHlth ###  Now thinking about your physical health, which includes physical illness and injury, for how many days during the past 30 days was your physical health not good?
+ggplot(data,
+       mapping = aes(x=PhysHlth, fill=Diabetes))+
+  geom_density(alpha=0.7) +
+  theme_light()
+
+kruskal.test(Diabetes ~ PhysHlth, data = data)
+# p < 0.05 zavise
+
+
+
+### DiffWalk ###   Do you have serious difficulty walking or climbing stairs?
+ggplot(data,
+       mapping = aes(x=DiffWalk, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+
+chisq.test(data$Diabetes, data$DiffWalk)
+#  p < 0.05  zavise
+
+
+
+### Sex ###
+ggplot(data, 
+       mapping = aes(x=Sex, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# ne zavise
+chisq.test(data$Diabetes, data$Sex)
+#  p < 0.05? 
+
+
+
+### Age ###
+ggplot(data, 
+       mapping = aes(x=Age, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+# zavise
+
+
+
+### Education ###
+ggplot(data, 
+       mapping = aes(x=Education, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+
+chisq.test(data$Diabetes, data$Education)
+# p < 0.05 zavise
+
+
+
+### Income ###
+ggplot(data, 
+       mapping = aes(x=Income, fill=Diabetes))+
+  geom_bar(position = "dodge") +
+  theme_light()
+
+chisq.test(data$Diabetes, data$Income)
+# p < 0.05 zavise
 
 
