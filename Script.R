@@ -279,7 +279,7 @@ ggplot(data = data,
                     ### Feature importance ###
 
 
-#### HighBP ###  
+#### 1. HighBP ### 
 ggplot(data,
        mapping = aes(x=HighBP, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -292,7 +292,7 @@ ggplot(data,
   theme_light()
 
 
-### HIghChol ###
+### 2. HIghChol ###
 ggplot(data,
        mapping = aes(x=HighChol, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -307,7 +307,7 @@ ggplot(data,
   
   
 
-### CholCheck ###    
+### 3. CholCheck ###    
 # no - cholesterol check in 5 years 
 # yes - cholesterol check in 5 years
 ggplot(data,
@@ -324,7 +324,7 @@ ggplot(data,
 
 
 
-### BMI ###     Body Mass Index: 12 - 98
+### 4. BMI ###     Body Mass Index: 12 - 98
 ggplot(data,
        mapping = aes(x=BMI, fill=Diabetes))+
   geom_density(alpha=0.7) +
@@ -333,7 +333,7 @@ ggplot(data,
 
 
 
-### Smoker ###    Have you smoked at least 100 cigarettes in your entire life? [Note: 5 packs = 100 cigarettes]
+### 5. Smoker ###    Have you smoked at least 100 cigarettes in your entire life? [Note: 5 packs = 100 cigarettes]
 ggplot(data,
        mapping = aes(x=Smoker, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -348,7 +348,7 @@ ggplot(data,
 round(prop.table(table(data$Smoker, data$Diabetes), margin = 1), 4)
 
 
-### Stroke ###
+### 6. Stroke ###
 ggplot(data,
        mapping = aes(x=Stroke, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -362,7 +362,7 @@ ggplot(data,
 # +
 
 
-### HeartDiseaseorAttack ###   coronary  heart disease (CHD) or myocardial infarction (MI)
+### 7. HeartDiseaseorAttack ###   coronary  heart disease (CHD) or myocardial infarction (MI)
 ggplot(data,
        mapping = aes(x=HeartDiseaseorAttack, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -376,7 +376,7 @@ ggplot(data,
 # +
 
 
-### PhysActivity ###  physical activity in past 30 days - not including job
+### 8. PhysActivity ###  physical activity in past 30 days - not including job
 ggplot(data,
        mapping = aes(x=PhysActivity, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -391,7 +391,7 @@ ggplot(data,
 
 
 
-### Fruits ###   Consume Fruit 1 or more times per day
+### 9. Fruits ###   Consume Fruit 1 or more times per day
 ggplot(data,
        mapping = aes(x=Fruits, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -409,7 +409,7 @@ round(prop.table(table(data$Fruits, data$Diabetes), margin = 1), 4)
 
 
 
-### Veggies ###    Consume Vegetables 1 or more times per day
+### 10. Veggies ###    Consume Vegetables 1 or more times per day
 ggplot(data,
        mapping = aes(x=Veggies, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -428,7 +428,7 @@ round(prop.table(table(data$Veggies, data$Diabetes), margin = 1), 4)
 
 
 
-### HvyAlcoholConsump ###  Heavy drinkers (adult men having more than 14 drinks per week and adult women having more than 7 drinks per week)
+### 11. HvyAlcoholConsump ###  Heavy drinkers (adult men having more than 14 drinks per week and adult women having more than 7 drinks per week)
 ggplot(data,
        mapping = aes(x=HvyAlcoholConsump, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -443,7 +443,7 @@ ggplot(data,
 
 
 
-### AnyHealthcare ###   Have any kind of health care coverage, including health insurance, prepaid plans such as HMO, etc.
+### 12. AnyHealthcare ###   Have any kind of health care coverage, including health insurance, prepaid plans such as HMO, etc.
 ggplot(data,
        mapping = aes(x=AnyHealthcare, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -451,7 +451,7 @@ ggplot(data,
 # -
 
 
-### NoDocbcCost ###   Was there a time in the past 12 months when you needed to see a doctor but could not because of cost?
+### 13. NoDocbcCost ###   Was there a time in the past 12 months when you needed to see a doctor but could not because of cost?
 ggplot(data,
        mapping = aes(x=NoDocbcCost, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -461,7 +461,7 @@ ggplot(data,
 
 
 
-### GenHlth ###   Would you say that in general your health is: scale 1-5 1 = excellent 2 = very good 3 = good 4 = fair 5 = poor
+### 14.GenHlth ###   Would you say that in general your health is: scale 1-5 1 = excellent 2 = very good 3 = good 4 = fair 5 = poor
 ggplot(data,
        mapping = aes(x=GenHlth, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -475,7 +475,7 @@ ggplot(data,
 
 
 
-### MentHlth ###  Now thinking about your mental health, which includes stress, depression, and problems with emotions, for how many days during the past 30 days was your mental health not good?
+### 15. MentHlth ###  Now thinking about your mental health, which includes stress, depression, and problems with emotions, for how many days during the past 30 days was your mental health not good?
 ggplot(data,
        mapping = aes(x=MentHlth, fill=Diabetes))+
   geom_density(alpha=0.7) +
@@ -484,7 +484,7 @@ ggplot(data,
 
 
 
-### PhysHlth ###  Now thinking about your physical health, which includes physical illness and injury, for how many days during the past 30 days was your physical health not good?
+### 16. PhysHlth ###  Now thinking about your physical health, which includes physical illness and injury, for how many days during the past 30 days was your physical health not good?
 ggplot(data,
        mapping = aes(x=PhysHlth, fill=Diabetes))+
   geom_density(alpha=0.7) +
@@ -493,7 +493,7 @@ ggplot(data,
 
 
 
-### DiffWalk ###   Do you have serious difficulty walking or climbing stairs?
+### 17. DiffWalk ###   Do you have serious difficulty walking or climbing stairs?
 ggplot(data,
        mapping = aes(x=DiffWalk, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -507,7 +507,7 @@ ggplot(data,
 # +
 
 
-### Sex ###
+### 18. Sex ###
 ggplot(data, 
        mapping = aes(x=Sex, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -524,7 +524,7 @@ round(prop.table(table(data$Diabetes, data$Sex),margin = 2),4)
 
 
 
-### Age ###
+### 19. Age ###
 ggplot(data, 
        mapping = aes(x=Age, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -539,7 +539,7 @@ ggplot(data,
 
 
 
-### Education ###
+### 20. Education ###
 ggplot(data, 
        mapping = aes(x=Education, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -555,7 +555,7 @@ ggplot(data,
 
 
 
-### Income ###
+### 21. Income ###
 ggplot(data, 
        mapping = aes(x=Income, fill=Diabetes))+
   geom_bar(position = "dodge") +
@@ -568,3 +568,8 @@ ggplot(data,
   theme_light()
 # +
 
+############################################################################
+
+final_data <- data[ , c(1:11,14:17,19:22) ] 
+
+saveRDS(object = final_data, file = "final_data.RDS")
