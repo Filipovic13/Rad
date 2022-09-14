@@ -263,8 +263,6 @@ eval5 <- compute_eval_measures(cm5)
 
 
 
-
-
 ###############################################
 data.frame(rbind(eval1,eval2,eval4,eval3,eval5),row.names = c("imbalanced","down default","down tuned","rose default","rose tuned"))
 
