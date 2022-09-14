@@ -7,38 +7,29 @@ library(rpart)
 library(rpart.plot)
 
 
-                            ### 1st default unbalanced ###
+############################## 1st default Imbalanced #####################################
 
 
 
 ######## Train and Test #######
 
 library(caret)
+
 set.seed(33)
 train_indices <- createDataPartition(data$Diabetes, p = 0.8, list = FALSE)
 train_data <- data[train_indices, ]
 test_data <- data[-train_indices, ]
 
 
-### Tree1
-
+### Tree1 
 set.seed(33)
 tree1 <- rpart(Diabetes ~ ., data = train_data)
-tree1
-
-rpart.plot(tree1, extra =104)
-
-
 
 tree1_pred <- predict(tree1, newdata = test_data, type = "class")
-
-
 
 cm1 <- table(actual=test_data$Diabetes,
              predict=tree1_pred)
 cm1
-
-
 
 compute_eval_measures <- function(cm){
   
@@ -126,7 +117,7 @@ compute_eval_measures <- function(cm){
   df[nrow(df) + 1,] <- c("", "", "", macro_F1)
   df[nrow(df) + 1,] <- c("", "", "", weighted_F1)
   
-  rownames(df) <- c("No", "Pre", "Yes","###", "MicroF1", "MacroF1","WeightedF1")
+  rownames(df) <- c("No", "Pre", "Yes","###", "Micro_F1", "Macro_F1","Weighted_F1")
   colnames(df) <- c("Accuracy", "Precision", "Recall", "F1")
   return(df)
   
@@ -134,61 +125,141 @@ compute_eval_measures <- function(cm){
 
 
 eval1 <- compute_eval_measures(cm1)
-eval1
 
 
 
-
-                           ### 2nd default balanced ###
-
-library(caret)
-#remotes::install_github("cran/DMwR")
-library(DMwR)
-#install.packages("ROSE")
-library(ROSE)
-
-
+#################################### 2nd default balanced #################################
 
 tr_ctrl <- trainControl(method = "repeatedcv", repeats = 5, 
                         classProbs = TRUE,
                         summaryFunction = multiClassSummary,
-                       sampling = "down")
+                        sampling = "down")
+
+cp_grid <- expand.grid(.cp = seq(0.001, 0.01, 0.0025))
 
 set.seed(33)
-down <- train(Diabetes ~ ., data = train_data,
-                     method = "rpart",
-                     metric = "Mean_F1",
-                     trControl = tr_ctrl)
+down <- train(x = train_data[,-19],
+              y = train_data$Diabetes,
+              method = "rpart",
+              metric = "prAUC",
+              trControl = tr_ctrl,
+              tuneGrid = cp_grid) 
+down$bestTune$cp
 
 
 
 tr_ctrl$sampling <- "up"
 
 set.seed(33)
-up <- train(Diabetes ~ ., data = train_data,
-                   method = "rpart",
-                   metric = "Mean_F1",
-                   trControl = tr_ctrl)
+up <- train(x = train_data[,-19],
+            y = train_data$Diabetes,
+            method = "rpart",
+            metric = "prAUC",
+            trControl = tr_ctrl,
+            tuneGrid = cp_grid)
+up$bestTune$cp
 
 
 
-tr_ctrl$sampling <- "rose"
-
-set.seed(33)
-rose <- train(Diabetes ~ ., data = train_data,
-                     method = "rpart",
-                     metric = "Mean_F1",
-                     trControl = tr_ctrl)
-
-
-
-tr_ctrl$sampling <- "smote"
+tr_ctrl$sampling <- NULL
 
 set.seed(33)
-smote <- train(Diabetes ~ ., data = train_data,
-                      method = "rpart",
-                      metric = "Mean_F1",
-                      trControl = tr_ctrl)
+original <- train(x = train_data[,-19], 
+                  y = train_data$Diabetes,
+                  method = "rpart",
+                  metric = "prAUC",
+                  trControl = tr_ctrl,
+                  tuneGrid = cp_grid)
+original$bestTune$cp
+
+best_cp <- 0.001
+
+models <- list(original = original,
+               down = down,
+               up = up)
+
+inside_resampling <- resamples(models)
+summary(inside_resampling, metric = "prAUC")
+# 
+# Call:
+#   summary.resamples(object = inside_resampling, metric = "prAUC")
+# 
+# Models: original, down, up 
+# Number of resamples: 50 
+# 
+# prAUC 
+#                 Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA's
+# original 0.2139329 0.2182342 0.2208237 0.2203819 0.2229718 0.2256323    0
+# down     0.2649725 0.3159778 0.3229105 0.3413587 0.3333754 0.4382137    0
+# up       0.2849296 0.3135349 0.3185886 0.3205220 0.3261735 0.4304269    0
 
 
 
+set.seed(33)
+down_balanced_train_data <- downSample(x = train_data[, -19],
+                                  y = train_data$Diabetes)
+
+colnames(down_balanced_train_data)[19] <- "Diabetes"
+down_balanced_train_data = down_balanced_train_data[sample(1:nrow(down_balanced_train_data)), ]
+
+table(down_balanced_train_data$Diabetes)
+
+
+
+###Tree2: downSample - default
+set.seed(33)
+tree2 <- rpart(formula = Diabetes ~ ., 
+               data = down_balanced_train_data)
+rpart.plot(tree2, extra = 104)
+
+tree2$control$cp
+
+tree2_pred <- predict(tree2, newdata = test_data, type = 'class')
+
+cm2 <- table(actual=test_data$Diabetes,
+             prediceted= tree2_pred)
+cm2
+
+
+eval2 <- compute_eval_measures(cm2)
+
+
+
+######################## 3rd - Tuned Balanced #######################
+tr_ctrl <- trainControl(method = 'repeatedcv',
+                        number = 10,
+                        repeats = 5)
+
+cp_grid <- expand.grid(.cp = seq(0.001, 0.1, 0.0005))
+
+set.seed(33)
+tree3_cv <- train(x = down_balanced_train_data[,-19],
+                  y = down_balanced_train_data$Diabetes,
+                  method = 'rpart',
+                  trControl = tr_ctrl,
+                  tuneGrid = cp_grid)
+tree3_cv$bestTune$cp
+
+
+
+####Tree3: downsample - tuned
+set.seed(33)
+tree3 <- rpart(formula = Diabetes ~ ., 
+               data = down_balanced_train_data,
+               control = rpart.control(cp =best_cp))
+rpart.plot(tree3, extra = 104)
+
+tree3_pred <- predict(tree3, newdata = test_data, type = 'class')
+
+cm3 <- table(actual=test_data$Diabetes,
+             prediceted= tree3_pred)
+cm3
+
+
+eval3 <- compute_eval_measures(cm3)
+
+
+
+eval1 #tree1: default imbalanced
+eval2 #tree2: default balanced-downSample cp=0.01
+eval3 #tree3: tuned   balanced-downSample cp=0.001
