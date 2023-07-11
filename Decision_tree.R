@@ -6,12 +6,7 @@ summary(data)
 library(rpart)
 library(rpart.plot)
 
-
-############################## 1st default Imbalanced #####################################
-
-
-
-######## Train and Test #######
+############################### Train and Test ##################################
 
 library(caret)
 
@@ -21,7 +16,10 @@ train_data <- data[train_indices, ]
 test_data <- data[-train_indices, ]
 
 
-### Tree1 
+############################## 1st default Imbalanced #####################################
+
+
+############# Tree1 - default imbalanced ###############
 set.seed(33)
 tree1 <- rpart(Diabetes ~ ., data = train_data)
 
@@ -30,6 +28,12 @@ tree1_pred <- predict(tree1, newdata = test_data, type = "class")
 cm1 <- table(actual=test_data$Diabetes,
              predict=tree1_pred)
 cm1
+#               predict
+# actual    No   Pre   Yes
+#   No    42740     0     0
+#   Pre     926     0     0
+#   Yes    7069     0     0
+
 
 compute_eval_measures <- function(cm){
   
@@ -58,13 +62,15 @@ compute_eval_measures <- function(cm){
           TP <-  cm[i,j]
         }
         
-        if (j == class_ & i != j) {
-          FN <-  FN + cm[i,j]
+        if (i == class_ & i != j) {
+          FN <- FN + cm[i,j]
         }
         
-        if (i == class_ & i != j) {
-          FP <- FP + cm[i,j]
+        if (j == class_ & i != j) {
+          FP <-  FP + cm[i,j]
         }
+        
+        
         
       }
       
@@ -112,10 +118,10 @@ compute_eval_measures <- function(cm){
   
   macro_F1 <-round(macro_F1/3,2) 
   
-  df[nrow(df) + 1,] <- c("###", "###", "###", "###")
-  df[nrow(df) + 1,] <- c("", "", "", micro_F1)
-  df[nrow(df) + 1,] <- c("", "", "", macro_F1)
-  df[nrow(df) + 1,] <- c("", "", "", weighted_F1)
+  df[nrow(df) + 1, ] <- c("###", "###", "###", "###")
+  df[nrow(df) + 1, ] <- c("", "", "", micro_F1)
+  df[nrow(df) + 1, ] <- c("", "", "", macro_F1)
+  df[nrow(df) + 1, ] <- c("", "", "", weighted_F1)
   
   rownames(df) <- c("No", "Pre", "Yes","###", "Micro_F1", "Macro_F1","Weighted_F1")
   colnames(df) <- c("Accuracy", "Precision", "Recall", "F1")
@@ -125,10 +131,18 @@ compute_eval_measures <- function(cm){
 
 
 eval1 <- compute_eval_measures(cm1)
+eval1
+# 
+# Accuracy Precision Recall   F1
+# No              0.84      0.84      1 0.91
+# Pre             0.84       NaN      0  NaN
+# Yes             0.84       NaN      0  NaN
+# ###              ###       ###    ###  ###
+# Micro_F1                              0.84
+# Macro_F1                               NaN
+# Weighted_F1                            NaN
 
-
-
-#################################### 2nd default balanced #################################
+#################################### CV #################################
 
 tr_ctrl <- trainControl(method = "repeatedcv", repeats = 5, 
                         classProbs = TRUE,
@@ -145,7 +159,7 @@ down <- train(x = train_data[,-19],
               trControl = tr_ctrl,
               tuneGrid = cp_grid) 
 down$bestTune$cp
-
+# 0.001
 
 
 tr_ctrl$sampling <- "up"
@@ -158,7 +172,7 @@ up <- train(x = train_data[,-19],
             trControl = tr_ctrl,
             tuneGrid = cp_grid)
 up$bestTune$cp
-
+# 0.001
 
 
 tr_ctrl$sampling <- NULL
@@ -171,6 +185,7 @@ original <- train(x = train_data[,-19],
                   trControl = tr_ctrl,
                   tuneGrid = cp_grid)
 original$bestTune$cp
+# 0.001
 
 best_cp <- 0.001
 
@@ -180,7 +195,7 @@ models <- list(original = original,
 
 inside_resampling <- resamples(models)
 summary(inside_resampling, metric = "prAUC")
-# 
+
 # Call:
 #   summary.resamples(object = inside_resampling, metric = "prAUC")
 # 
@@ -188,65 +203,67 @@ summary(inside_resampling, metric = "prAUC")
 # Number of resamples: 50 
 # 
 # prAUC 
-#                 Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA's
+# Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA's
 # original 0.2139329 0.2182342 0.2208237 0.2203819 0.2229718 0.2256323    0
 # down     0.2649725 0.3159778 0.3229105 0.3413587 0.3333754 0.4382137    0
 # up       0.2849296 0.3135349 0.3185886 0.3205220 0.3261735 0.4304269    0
 
+#################################### 2nd default balanced #################################
 
 
 set.seed(33)
 down_balanced_train_data <- downSample(x = train_data[, -19],
                                   y = train_data$Diabetes)
-
 colnames(down_balanced_train_data)[19] <- "Diabetes"
-down_balanced_train_data = down_balanced_train_data[sample(1:nrow(down_balanced_train_data)), ]
-
 table(down_balanced_train_data$Diabetes)
+# No  Pre  Yes 
+# 3705 3705 3705 
 
 
 
-###Tree2: downSample - default
+########################### Tree2: downSample - default ##############################
 set.seed(33)
 tree2 <- rpart(formula = Diabetes ~ ., 
                data = down_balanced_train_data)
 rpart.plot(tree2, extra = 104)
 
+sort(tree2$variable.importance)
+
 tree2$control$cp
+# 0.01
 
 tree2_pred <- predict(tree2, newdata = test_data, type = 'class')
 
 cm2 <- table(actual=test_data$Diabetes,
              prediceted= tree2_pred)
 cm2
+#           prediceted
+# actual    No   Pre   Yes
+# No      27163  6874  8703
+# Pre     289   210   427
+# Yes     1355  1466  4248
 
 
 eval2 <- compute_eval_measures(cm2)
-
+eval2
+#             Accuracy Precision Recall   F1
+# No              0.62      0.94   0.64 0.76
+# Pre             0.62      0.02   0.23 0.04
+# Yes             0.62      0.32    0.6 0.42
+# ###              ###       ###    ###  ###
+# Micro_F1                              0.62
+# Macro_F1                              0.41
+# Weighted_F1                           0.55
 
 
 ######################## 3rd - Tuned Balanced #######################
-tr_ctrl <- trainControl(method = 'repeatedcv',
-                        number = 10,
-                        repeats = 5)
 
-cp_grid <- expand.grid(.cp = seq(0.001, 0.1, 0.0005))
+########################### Tree3: downSample - tuned ##############################
 
-set.seed(33)
-tree3_cv <- train(x = down_balanced_train_data[,-19],
-                  y = down_balanced_train_data$Diabetes,
-                  method = 'rpart',
-                  trControl = tr_ctrl,
-                  tuneGrid = cp_grid)
-tree3_cv$bestTune$cp
+tree3 <- down$finalModel
+tree3$tuneValue
+# 0.001
 
-
-
-####Tree3: downsample - tuned
-set.seed(33)
-tree3 <- rpart(formula = Diabetes ~ ., 
-               data = down_balanced_train_data,
-               control = rpart.control(cp =best_cp))
 rpart.plot(tree3, extra = 104)
 
 tree3_pred <- predict(tree3, newdata = test_data, type = 'class')
@@ -254,12 +271,61 @@ tree3_pred <- predict(tree3, newdata = test_data, type = 'class')
 cm3 <- table(actual=test_data$Diabetes,
              prediceted= tree3_pred)
 cm3
+#             prediceted
+# actual    No   Pre   Yes
+# No        27800  8475  6465
+# Pre       278   275   373
+# Yes       1364  1955  3750
 
 
 eval3 <- compute_eval_measures(cm3)
+eval3
+#             Accuracy Precision Recall   F1
+# No              0.63      0.94   0.65 0.77
+# Pre             0.63      0.03    0.3 0.05
+# Yes             0.63      0.35   0.53 0.42
+# ###              ###       ###    ###  ###
+# Micro_F1                              0.63
+# Macro_F1                              0.41
+# Weighted_F1                           0.55
 
-
+########################## Eval ###############################################
 
 eval1 #tree1: default imbalanced
+
+#             Accuracy Precision Recall   F1
+# No              0.84      0.84      1 0.91
+# Pre             0.84       NaN      0  NaN
+# Yes             0.84       NaN      0  NaN
+# ###              ###       ###    ###  ###
+# Micro_F1                              0.84
+# Macro_F1                               NaN
+# Weighted_F1                            NaN
+
+
 eval2 #tree2: default balanced-downSample cp=0.01
+
+#               Accuracy Precision Recall   F1
+# No              0.62      0.94   0.64 0.76
+# Pre             0.62      0.02   0.23 0.04
+# Yes             0.62      0.32    0.6 0.42
+# ###              ###       ###    ###  ###
+# Micro_F1                              0.62
+# Macro_F1                              0.41
+# Weighted_F1                           0.55
+
+
 eval3 #tree3: tuned   balanced-downSample cp=0.001
+# Accuracy Precision Recall   F1
+# No              0.63      0.94   0.65 0.77
+# Pre             0.63      0.03    0.3 0.05
+# Yes             0.63      0.35   0.53 0.42
+# ###              ###       ###    ###  ###
+# Micro_F1                              0.63
+# Macro_F1                              0.41
+# Weighted_F1                           0.55
+
+# Error in exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE) : 
+#   invalid first argument
+# Error in assign(cacheKey, frame, .rs.CachedDataEnv) : 
+#   attempt to use zero-length variable name
