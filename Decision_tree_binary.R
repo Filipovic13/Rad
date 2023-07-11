@@ -1,4 +1,5 @@
 library(pROC)
+library(MLmetrics)
 
 data <- readRDS(file = "final_data.RDS")
 
@@ -57,9 +58,8 @@ tree1_prob <- predict(tree1, newdata = test_data, type = "prob")
 
 
 compute_eval_metrics <- function(cm, y_true, y_pred_prob){
-  
-  tree1_roc = roc(y_true, y_pred_prob)
-  auc = auc(tree1_roc)
+
+  prAUC = PRAUC(y_pred_prob, y_true)[1]
   
   TP <- cm[2,2] 
   TN <- cm[1,1] 
@@ -71,13 +71,13 @@ compute_eval_metrics <- function(cm, y_true, y_pred_prob){
   r <- TP/(TP + FN)
   f1 <- 2*p*r/(r+p)
   
-  c(precision=p, recall=r, F1=f1, AUC = auc)
+  c(precision=p, recall=r, F1=f1, prauc = prAUC)
 }
 
 eval1 <- compute_eval_metrics(cm1, test_data$Diabetes, tree1_prob[,2])
 eval1
-# precision    recall        F1       AUC 
-# NaN             0.0       NaN       0.5 
+# precision    recall        F1     prauc 
+# NaN             0         NaN        0 
 
 
 #################################### CV #############################################
@@ -212,8 +212,8 @@ tree2_prob <-  predict(tree2, newdata = test_data, type = 'prob')
 # 
 eval2 <- compute_eval_metrics(cm2, test_data$Diabetes, tree2_prob[,2])
 eval2
-# precision    recall        F1       AUC
-# 0.3102997 0.7706066 0.4424417 0.7672308 
+# precision    recall        F1     prauc 
+# 0.3102997 0.7706066 0.4424417 0.1132496  
 
 
 
@@ -251,8 +251,8 @@ tree3_prob <- predict(tree3, newdata = test_data, type = "prob")
 
 eval3 <- compute_eval_metrics(cm3, test_data$Diabetes, tree3_prob[,2])
 eval3
-# precision    recall        F1       AUC 
-# 0.3045448 0.7652283 0.4356929 0.7632335
+# precision    recall        F1     prauc 
+# 0.3045448 0.7652283 0.4356929 0.1111096
 
 
 ################################  3rd - Tuned Balanced   ###########################
@@ -281,8 +281,9 @@ tree4_prob <- predict(tree4, newdata = test_data, type = "prob")
 
 eval4 <- compute_eval_metrics(cm4, test_data$Diabetes, tree4_prob[,2])
 eval4
-# precision    recall        F1       AUC 
-# 0.3247831 0.7585991 0.4548352 0.7697429 
+# precision    recall        F1     prauc 
+# 0.3247831 0.7585991 0.4548352 0.1149385 
+
 
 
 ################################  Balanced Rose   ###########################
@@ -310,22 +311,23 @@ tree5_prob <- predict(tree5, newdata = test_data, type = "prob")
 
 eval5 <- compute_eval_metrics(cm5, test_data$Diabetes, tree5_prob[,2])
 eval5
-# precision    recall        F1       AUC 
-# 0.3129963 0.7937461 0.4489565 0.7726383 
+# precision    recall        F1     prauc 
+# 0.3129963 0.7937461 0.4489565 0.1164702 
 
 
 ####################################################################
 
 data.frame(rbind(eval2,eval4),row.names = c("down default","up default"))
-#             precision    recall        F1       AUC
-# down tuned 0.3045448 0.7652283 0.4356929 0.7632335
-# up tuned   0.3129963 0.7937461 0.4489565 0.7726383
+# precision    recall        F1     prauc
+# down default 0.3102997 0.7706066 0.4424417 0.1132496
+# up default   0.3247831 0.7585991 0.4548352 0.1149385
 
 
 data.frame(rbind(eval3,eval5),row.names = c("down tuned","up tuned"))
-#           precision    recall        F1       AUC
-# down tuned 0.3045448 0.7652283 0.4356929 0.7632335
-# up tuned   0.3129963 0.7937461 0.4489565 0.7726383
+# precision    recall        F1     prauc
+# down tuned 0.3045448 0.7652283 0.4356929 0.1111096
+# up tuned   0.3129963 0.7937461 0.4489565 0.1164702
+
 
 
 

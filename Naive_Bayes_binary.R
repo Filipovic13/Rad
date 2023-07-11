@@ -1,4 +1,6 @@
 library(pROC)
+library(MLmetrics)
+
 
 data <- readRDS(file = "final_data.RDS")
 
@@ -95,8 +97,7 @@ head(nb1_prob)
 
 compute_eval_metrics <- function(cm, y_true, y_pred_prob){
   
-  tree1_roc = roc(y_true, y_pred_prob)
-  auc = auc(tree1_roc)
+  prAUC = PRAUC(y_pred_prob, y_true)[1]
   
   TP <- cm[2,2] 
   TN <- cm[1,1] 
@@ -108,13 +109,14 @@ compute_eval_metrics <- function(cm, y_true, y_pred_prob){
   r <- TP/(TP + FN)
   f1 <- 2*p*r/(r+p)
   
-  c(precision=p, recall=r, F1=f1, AUC = auc)
+  c(precision=p, recall=r, F1=f1, prauc = prAUC)
 }
 
 eval1 <-compute_eval_metrics(cm1, test_data$Diabetes, nb1_prob[, 2])
 eval1
-# precision    recall        F1       AUC 
-# 0.3794025 0.4796748 0.4236867 0.7934715 
+# precision    recall        F1     prauc 
+# 0.3794025 0.4796748 0.4236867 0.3746899 
+
 
 #################################### CV #############################################
 # library(ROSE)
@@ -229,8 +231,9 @@ nb2_prob <- predict(nb2, newdata = test_data, type = "raw")
 
 eval2 <- compute_eval_metrics(cm2, test_data$Diabetes, nb2_prob[, 2])
 eval2
-# precision    recall        F1       AUC 
-# 0.3402545 0.6722952 0.4518325 0.7933573 
+# precision    recall        F1     prauc 
+# 0.3402545 0.6722952 0.4518325 0.3744300
+ 
 
 
 
@@ -262,13 +265,14 @@ cm3
 
 eval3 <- compute_eval_metrics(cm3, y_true = test_data$Diabetes, y_pred_prob = nb2_prob[,2])
 eval3
-# precision    recall        F1       AUC
-# 0.2976489 0.8155097 0.4361204 0.7933573 
+# precision    recall        F1     prauc
+# 0.2976489 0.8155097 0.4361204 0.3744300
+
 
 
 data.frame(rbind(eval1,eval2,eval3),row.names = paste("NB",1:3))
-#     precision    recall        F1       AUC
-# NB 1 0.3794025 0.4796748 0.4236867 0.7934715
-# NB 2 0.3402545 0.6722952 0.4518325 0.7933573
-# NB 3 0.2976489 0.8155097 0.4361204 0.7933573
+# precision    recall        F1     prauc
+# NB 1 0.3794025 0.4796748 0.4236867 0.3746899
+# NB 2 0.3402545 0.6722952 0.4518325 0.3744300
+# NB 3 0.2976489 0.8155097 0.4361204 0.3744300
 
