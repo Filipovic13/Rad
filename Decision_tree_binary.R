@@ -1,13 +1,8 @@
-library(pROC)
+source("Util.R")
 library(MLmetrics)
 
-data <- readRDS(file = "final_data.RDS")
+data <- readRDS(file = "final_data_binary.RDS")
 
-table(data$Diabetes)
-# No    Pre    Yes 
-# 213703   4631  35346 
-
-levels(data$Diabetes) <- c("No",  "Yes", "Yes")
 table(data$Diabetes)
 # No    Yes 
 # 213703  39977 
@@ -17,8 +12,6 @@ ggplot(data = data,
        mapping = aes(x= Diabetes)) +
        geom_bar(position = "dodge")+
        theme_light()
-
-
 
 
 
@@ -56,24 +49,6 @@ cm1
 
 tree1_prob <- predict(tree1, newdata = test_data, type = "prob")
 
-
-compute_eval_metrics <- function(cm, y_true, y_pred_prob){
-
-  prAUC = PRAUC(y_pred_prob, y_true)[1]
-  
-  TP <- cm[2,2] 
-  TN <- cm[1,1] 
-  FP <- cm[1,2] 
-  FN <- cm[2,1]
-  
-  a <- (TP + TN)/sum(cm)
-  p <- TP/(TP + FP)
-  r <- TP/(TP + FN)
-  f1 <- 2*p*r/(r+p)
-  
-  c(precision=p, recall=r, F1=f1, prauc = prAUC)
-}
-
 eval1 <- compute_eval_metrics(cm1, test_data$Diabetes, tree1_prob[,2])
 eval1
 # precision    recall        F1     prauc 
@@ -85,9 +60,10 @@ eval1
 library(ROSE)
 
 ################# sampling: down ####################
+
 tr_ctrl <- trainControl(method = "repeatedcv", repeats = 5, 
                         classProbs = TRUE,
-                        summaryFunction = prSummary,
+                        summaryFunction = my_summary,
                         sampling = "down")
 
 cp_grid <- expand.grid(.cp = seq(0.001, 0.01, 0.0025))
@@ -98,7 +74,10 @@ down <- train(x = train_data[,-19],
               method = "rpart",
               metric = "AUC",
               trControl = tr_ctrl,
-              tuneGrid = cp_grid) 
+              tuneGrid = cp_grid)
+
+down 
+
 down$bestTune$cp
 # 0.001
 
@@ -114,66 +93,71 @@ up <- train(x = train_data[,-19],
             metric = "AUC",
             trControl = tr_ctrl,
             tuneGrid = cp_grid)
-# Warning message:
-#   In UseMethod("depth") :
-#   no applicable method for 'depth' applied to an object of class "NULL"
+up 
+
 up$bestTune$cp
 # 0.001
 
 ################# sampling: ROSE ####################
 
-# tr_ctrl$sampling <- "rose"
-# 
-# set.seed(33)
-# rose <- train(x = train_data[,-19],
-#             y = train_data$Diabetes,
-#             method = "rpart",
-#             metric = "AUC",
-#             trControl = tr_ctrl,
-#             tuneGrid = cp_grid)
-# rose$bestTune$cp
-# 0.001
+tr_ctrl$sampling <- "rose"
+
+set.seed(33)
+rose <- train(x = train_data[,-19],
+            y = train_data$Diabetes,
+            method = "rpart",
+            metric = "AUC",
+            trControl = tr_ctrl,
+            tuneGrid = cp_grid)
+
+rose
+
+rose$bestTune$cp
+#0.001
 
 
 
 ################# sampling: Original ####################
 
-# 
-# tr_ctrl$sampling <- NULL
-# 
-# set.seed(33)
-# original <- train(x = train_data[,-19], 
-#                   y = train_data$Diabetes,
-#                   method = "rpart",
-#                   metric = "AUC",
-#                   trControl = tr_ctrl,
-#                   tuneGrid = cp_grid)
-# original$bestTune$cp
+
+tr_ctrl$sampling <- NULL
+
+set.seed(33)
+original <- train(x = train_data[,-19],
+                  y = train_data$Diabetes,
+                  method = "rpart",
+                  metric = "AUC",
+                  trControl = tr_ctrl,
+                  tuneGrid = cp_grid)
+
+original
+
+original$bestTune$cp
 # 0.001
 
 best_cp <- 0.001
 
-# models <- list(original = original,
-#                down = down,
-#                up = up,
-#                rose = rose)
-# 
-# inside_resampling <- resamples(models)
-# summary(inside_resampling, metric = "AUC")
+models <- list(original = original,
+               down = down,
+               up = up,
+               rose = rose)
+
+inside_resampling <- resamples(models)
+summary(inside_resampling, metric = "F")
 #################################################################################
 # Call:
-#   summary.resamples(object = inside_resampling, metric = "AUC")
+#   summary.resamples(object = inside_resampling, metric = "F")
 # 
 # Models: original, down, up, rose 
 # Number of resamples: 50 
 # 
-# AUC 
-#               Min.   1st Qu.    Median      Mean   3rd Qu.      Max.   NA's
-# original 0.3248479 0.3313818 0.3335803 0.3333812 0.3352307 0.3421177    0
-# down     0.5283582 0.5336645 0.5354586 0.5588453 0.5378858 0.9296631    0      <----- down
-# up       0.5284311 0.5333845 0.5345331 0.5582875 0.5372531 0.9351010    0      <--    up
-# rose     0.5277206 0.5330426 0.5351985 0.5401585 0.5370996 0.6255246    0
-################################################################################
+# F 
+#               Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA's
+# original 0.1692349 0.1939046 0.2075170 0.2075178 0.2156520 0.2447196    0
+# down     0.4372370 0.4465046 0.4518636 0.4507007 0.4543538 0.4678397    0  <---
+# up       0.4329628 0.4446448 0.4498972 0.4490391 0.4531891 0.4618847    0
+# rose     0.4356583 0.4483498 0.4509018 0.4518355 0.4573591 0.4669839    0  <---
+# ################################################################################
 
 #################################### 2nd default balanced #################################
 
@@ -209,7 +193,7 @@ cm2
 
 
 tree2_prob <-  predict(tree2, newdata = test_data, type = 'prob')
-# 
+
 eval2 <- compute_eval_metrics(cm2, test_data$Diabetes, tree2_prob[,2])
 eval2
 # precision    recall        F1     prauc 
@@ -232,8 +216,7 @@ table(up_balanced_train_data$Diabetes)
 ########################### Tree3: UPSAMPLE - default ##############################
 
 
-tree3 <- rpart(Diabetes ~ .,
-               data =  up_balanced_train_data)
+tree3 <- rpart(Diabetes ~ ., data =  up_balanced_train_data)
 
 rpart.plot(tree3, extra = 104)
 
