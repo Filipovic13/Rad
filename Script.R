@@ -573,3 +573,9 @@ ggplot(data,
 final_data <- data[ , c(1:11,14:17,19:22) ] 
 
 saveRDS(object = final_data, file = "final_data.RDS")
+
+final_data_binary <-  final_data
+levels(final_data_binary$Diabetes ) <-  c("No",  "Yes", "Yes")
+
+saveRDS(object = final_data_binary, file = "final_data_binary.RDS")
+write.csv(final_data_binary, file = "binary_csv.CSV" )
