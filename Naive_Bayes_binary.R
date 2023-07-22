@@ -1,14 +1,9 @@
-library(pROC)
+source("Util.R")
 library(MLmetrics)
 
 
-data <- readRDS(file = "final_data.RDS")
+data <- readRDS(file = "final_data_binary.RDS")
 
-table(data$Diabetes)
-# No    Pre    Yes
-# 213703   4631  35346
-
-levels(data$Diabetes) <- c("No",  "Yes", "Yes")
 table(data$Diabetes)
 # No    Yes
 # 213703  39977
@@ -56,8 +51,7 @@ discretized_data <- discretize(data = data[, numerical_columns],
 summary(discretized_data)
 
 
-columns_to_add <-
-  setdiff(colnames(data), colnames(discretized_data))
+columns_to_add <- setdiff(colnames(data), colnames(discretized_data))
 
 transformed_data <- cbind(discretized_data, data[, columns_to_add])
 
@@ -67,18 +61,17 @@ transformed_data <- transformed_data[, colnames(transformed_data)]
 library(caret)
 
 set.seed(33)
-train_indices <-
-  createDataPartition(transformed_data$Diabetes, p = 0.8, list = FALSE)
+train_indices <- createDataPartition(transformed_data$Diabetes, p = 0.8, list = FALSE)
 train_data <- data[train_indices,]
 test_data <- data[-train_indices,]
 
 ################################  1st default Imbalanced   ###########################
-
+library(pROC)
 
 ########## NB1 : default Imbalanced #######
-library(e1071)
+library(naivebayes)
 
-nb1 <- naiveBayes(Diabetes ~ ., data = train_data)
+nb1 <- naive_bayes(Diabetes ~ ., data = train_data)
 
 nb1_pred <- predict(nb1, newdata = test_data, type = 'class')
 
@@ -92,25 +85,8 @@ cm1
 # No      36467  6273
 # Yes     4160  3835
 
-nb1_prob <- predict(nb1, newdata = test_data, type = "raw")
+nb1_prob <- predict(nb1, newdata = test_data, type = "prob")
 head(nb1_prob)
-
-compute_eval_metrics <- function(cm, y_true, y_pred_prob){
-  
-  prAUC = PRAUC(y_pred_prob, y_true)[1]
-  
-  TP <- cm[2,2] 
-  TN <- cm[1,1] 
-  FP <- cm[1,2] 
-  FN <- cm[2,1]
-  
-  a <- (TP + TN)/sum(cm)
-  p <- TP/(TP + FP)
-  r <- TP/(TP + FN)
-  f1 <- 2*p*r/(r+p)
-  
-  c(precision=p, recall=r, F1=f1, prauc = prAUC)
-}
 
 eval1 <-compute_eval_metrics(cm1, test_data$Diabetes, nb1_prob[, 2])
 eval1
@@ -119,86 +95,104 @@ eval1
 
 
 #################################### CV #############################################
-# library(ROSE)
-# 
-# ################# sampling: down ####################
-# tr_ctrl <- trainControl(method = "repeatedcv",
-#                         repeats = 5,
-#                         classProbs = TRUE,
-#                         summaryFunction = prSummary,
-#                         sampling = "down")
-# 
-# set.seed(33)
-# down <- train(x = train_data[, -19],
-#                 y = train_data$Diabetes,
-#                 method = "nb",
-#                 metric = "AUC",
-#                 trControl = tr_ctrl)
-# 
-# 
-# 
-# ################# sampling: up ####################
-# 
-# tr_ctrl$sampling <- "up"
-# 
-# set.seed(33)
-# up <- train(x = train_data[, -19],
-#             y = train_data$Diabetes,
-#             method = "nb",
-#             metric = "AUC",
-#             trControl = tr_ctrl)
-# 
-# ################# sampling: ROSE ####################
-# 
-# tr_ctrl$sampling <- "rose"
-# ? caret::train()
-# set.seed(33)
-# rose <- train(x = train_data[, -19],
-#               y = train_data$Diabetes,
-#               method = "nb",
-#               metric = "AUC",
-#               trControl = tr_ctrl)
-# 
-# 
-# 
-# 
-# ################# sampling: Original ####################
-# 
-# 
-# tr_ctrl$sampling <- NULL
-# 
-# set.seed(33)
-# original <- train(x = train_data[, -19],
-#                   y = train_data$Diabetes,
-#                   method = "nb",
-#                   metric = "AUC",
-#                   trControl = tr_ctrl)
-# 
-# 
-# 
-# 
-# models <- list(original = original,
-#                 down = down,
-#                 up = up,
-#                 rose = rose)
-# 
-# inside_resampling <- resamples(models)
-# summary(inside_resampling, metric = "AUC")
+ library(ROSE)
+ 
+################### sampling: down ####################
+tr_ctrl <- trainControl(method = "repeatedcv",
+                        repeats = 5,
+                        classProbs = TRUE,
+                        summaryFunction = my_summary,
+                        sampling = "down")
 
-################################################################################
+set.seed(33)
+down <- train(x = train_data[, -19],
+                y = train_data$Diabetes,
+                method = "naive_bayes",
+                metric = "AUC",
+                trControl = tr_ctrl)
+
+down
+
+# ################# sampling: up ####################
+
+tr_ctrl$sampling <- "up"
+
+set.seed(33)
+up <- train(x = train_data[, -19],
+            y = train_data$Diabetes,
+            method = "naive_bayes",
+            metric = "AUC",
+            trControl = tr_ctrl)
+
+up
+
+# ################# sampling: ROSE ####################
+
+tr_ctrl$sampling <- "rose"
+
+set.seed(33)
+rose <- train(x = train_data[, -19],
+              y = train_data$Diabetes,
+              method = "naive_bayes",
+              metric = "AUC",
+              trControl = tr_ctrl)
+
+rose
+
+
+################# sampling: Original ####################
+
+
+tr_ctrl$sampling <- NULL
+
+set.seed(33)
+original <- train(x = train_data[, -19],
+                  y = train_data$Diabetes,
+                  method = "naive_bayes",
+                  metric = "AUC",
+                  trControl = tr_ctrl)
+
+
+
+
+models <- list(original = original,
+                down = down,
+                up = up,
+                rose = rose)
+
+inside_resampling <- resamples(models)
+summary(inside_resampling, metric = "AUC")
+###############################################################################
 # Call:
 #   summary.resamples(object = inside_resampling, metric = "AUC")
-#
-# Models: original, down, up, rose
-# Number of resamples: 50
-#
-# AUC
-#               Min.   1st Qu.    Median      Mean   3rd Qu.      Max.   NA's
-# original 0.9500466 0.9529065 0.9535987 0.9534848 0.9542256 0.9564392    0
-# down     0.9499679 0.9529450 0.9536358 0.9535132 0.9542540 0.9565705    0
-# up       0.9507336 0.9535391 0.9542217 0.9541446 0.9549626 0.9571069    0     <----- up
-# rose     0.9507305 0.9532142 0.9539003 0.9539190 0.9547318 0.9571405    0     <-
+# 
+# Models: original, down, up, rose 
+# Number of resamples: 50 
+# 
+# AUC 
+# Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA's
+# original 0.3918966 0.3991806 0.4058161 0.4055504 0.4111961 0.4326396    0
+# down     0.3921116 0.3986739 0.4056563 0.4052306 0.4110744 0.4327341    0
+# up       0.3948157 0.4018808 0.4088574 0.4086354 0.4137861 0.4356612    0
+# rose     0.3934671 0.4017609 0.4089385 0.4083572 0.4136724 0.4311674    0
+###############################################################################
+
+
+summary(inside_resampling, metric = "F")
 ################################################################################
+# Call:
+#   summary.resamples(object = inside_resampling, metric = "F")
+# 
+# Models: original, down, up, rose 
+# Number of resamples: 50 
+# 
+# F 
+# Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA's
+# original 0.3109897 0.3186279 0.3243370 0.3248112 0.3300521 0.3466611    0
+# down     0.4293356 0.4406327 0.4452272 0.4450023 0.4494114 0.4670407    0
+# up       0.4225103 0.4352816 0.4408110 0.4406322 0.4456034 0.4658892    0
+# rose     0.4440124 0.4538093 0.4574747 0.4573747 0.4603730 0.4746528    0
+#################################################################################
 
 
 #################################### 2nd default balanced #################################
@@ -214,7 +208,7 @@ table(up_balanced_train_data$Diabetes)
 
 ########################### NB2: UPSAMPLE - default ############################
 
-nb2 <- naiveBayes(Diabetes ~ ., data = up_balanced_train_data)
+nb2 <- naive_bayes(Diabetes ~ ., data = up_balanced_train_data)
 
 nb2_pred <- predict(nb2, newdata = test_data, type = 'class')
 
@@ -223,16 +217,16 @@ cm2 <- table(actual = test_data$Diabetes,
 cm2
 #           predicted
 # actual    No   Yes
-# No        32318 10422
-# Yes       2620  5375
+# No      32328 10412
+# Yes     2623  5372
 
 
-nb2_prob <- predict(nb2, newdata = test_data, type = "raw")
+nb2_prob <- predict(nb2, newdata = test_data, type = "prob")
 
 eval2 <- compute_eval_metrics(cm2, test_data$Diabetes, nb2_prob[, 2])
 eval2
 # precision    recall        F1     prauc 
-# 0.3402545 0.6722952 0.4518325 0.3744300
+# 0.3403447 0.6719199 0.4518272 0.3748528 
  
 
 
@@ -257,22 +251,22 @@ nb2_pred2 <- as.factor(nb2_pred2)
 cm3 <- table(actual = test_data$Diabetes,
              predicted = nb2_pred2)
 cm3
-#             predicted
+#           predicted
 # actual    No   Yes
-# No      27355 15385
-# Yes     1475  6520
+# No      27424 15316
+# Yes     1483  6512
 
 
 eval3 <- compute_eval_metrics(cm3, y_true = test_data$Diabetes, y_pred_prob = nb2_prob[,2])
 eval3
-# precision    recall        F1     prauc
-# 0.2976489 0.8155097 0.4361204 0.3744300
+# precision    recall        F1     prauc 
+# 0.2983324 0.8145091 0.4367099 0.3748528 
 
 
 
 data.frame(rbind(eval1,eval2,eval3),row.names = paste("NB",1:3))
 # precision    recall        F1     prauc
 # NB 1 0.3794025 0.4796748 0.4236867 0.3746899
-# NB 2 0.3402545 0.6722952 0.4518325 0.3744300
-# NB 3 0.2976489 0.8155097 0.4361204 0.3744300
+# NB 2 0.3403447 0.6719199 0.4518272 0.3748528
+# NB 3 0.2983324 0.8145091 0.4367099 0.3748528
 
