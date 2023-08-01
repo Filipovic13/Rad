@@ -56,8 +56,8 @@ eval1
 
 
 #################################### CV #############################################
-#install.packages("ROSE")
-library(ROSE)
+
+
 
 ################# sampling: down ####################
 
@@ -72,7 +72,7 @@ set.seed(33)
 down <- train(x = train_data[,-19],
               y = train_data$Diabetes,
               method = "rpart",
-              metric = "AUC",
+              metric = "F",
               trControl = tr_ctrl,
               tuneGrid = cp_grid)
 
@@ -90,7 +90,7 @@ set.seed(33)
 up <- train(x = train_data[,-19],
             y = train_data$Diabetes,
             method = "rpart",
-            metric = "AUC",
+            metric = "F",
             trControl = tr_ctrl,
             tuneGrid = cp_grid)
 up 
@@ -99,6 +99,7 @@ up$bestTune$cp
 # 0.001
 
 ################# sampling: ROSE ####################
+library(ROSE)
 
 tr_ctrl$sampling <- "rose"
 
@@ -106,7 +107,7 @@ set.seed(33)
 rose <- train(x = train_data[,-19],
             y = train_data$Diabetes,
             method = "rpart",
-            metric = "AUC",
+            metric = "F",
             trControl = tr_ctrl,
             tuneGrid = cp_grid)
 
@@ -126,7 +127,7 @@ set.seed(33)
 original <- train(x = train_data[,-19],
                   y = train_data$Diabetes,
                   method = "rpart",
-                  metric = "AUC",
+                  metric = "F",
                   trControl = tr_ctrl,
                   tuneGrid = cp_grid)
 
@@ -153,10 +154,10 @@ summary(inside_resampling, metric = "F")
 # 
 # F 
 #               Min.   1st Qu.    Median      Mean   3rd Qu.      Max. NA's
-# original 0.1692349 0.1939046 0.2075170 0.2075178 0.2156520 0.2447196    0
-# down     0.4372370 0.4465046 0.4518636 0.4507007 0.4543538 0.4678397    0  <---
+# original 0.1993834 0.2396913 0.2613308 0.2491320 0.2662214 0.2857810   17
+# down     0.4372370 0.4465046 0.4518636 0.4507007 0.4543538 0.4678397    0     <---
 # up       0.4329628 0.4446448 0.4498972 0.4490391 0.4531891 0.4618847    0
-# rose     0.4356583 0.4483498 0.4509018 0.4518355 0.4573591 0.4669839    0  <---
+# rose     0.4356583 0.4483498 0.4509018 0.4518355 0.4573591 0.4669839    0     <---
 # ################################################################################
 
 #################################### 2nd default balanced #################################
@@ -171,11 +172,9 @@ table(down_balanced_train_data$Diabetes)
 # No   Yes 
 # 31982 31982 
 
-
-########################### Tree2: downSample - default ##############################
+#### Tree2: downSample - default ###
 set.seed(33)
-tree2 <- rpart(formula = Diabetes ~ ., 
-               data = down_balanced_train_data)
+tree2 <- rpart(formula = Diabetes ~ ., data = down_balanced_train_data)
 rpart.plot(tree2, extra = 104)
 
 tree2$control$cp
@@ -203,26 +202,25 @@ eval2
 
 
 
-### UPSAMPLE ###
-up_balanced_train_data <- upSample(x = train_data[, -19],
-                                   y = train_data$Diabetes,
-                                   yname = "Diabetes")
+### ROSE  ###
+rose_balanced_train_data <-  ROSE(Diabetes ~ ., data = train_data, seed = 33)$data
 
-table(up_balanced_train_data$Diabetes)
+table(rose_balanced_train_data$Diabetes)
 # No    Yes 
-# 170963 170963
+# 101655 101290 
 
 
-########################### Tree3: UPSAMPLE - default ##############################
+########################### Tree3: ROSE (Random Over Sampling Examples) - default ##############################
 
 
-tree3 <- rpart(Diabetes ~ ., data =  up_balanced_train_data)
+tree3 <- rpart(Diabetes ~ ., data =  rose_balanced_train_data)
 
 rpart.plot(tree3, extra = 104)
 
 tree3_pred <- predict(tree3, newdata = test_data, type = "class")
+
 cm3 <- table(actual = test_data$Diabetes,
-      predicted = tree3_pred)
+             predicted = tree3_pred)
 cm3
 #           predicted
 # actual    No   Yes
@@ -269,13 +267,10 @@ eval4
 
 
 
-################################  Balanced Rose   ###########################
+########### Tree5: Balanced ROSE ######
 
 
-########### Tree5: Balanced upSample ######
-
-
-tree5 <- up$finalModel
+tree5 <- rose$finalModel
 
 rpart.plot(tree5, extra = 104)
 
@@ -284,10 +279,10 @@ tree5_pred <- predict(tree5, newdata = test_data, type = "class")
 cm5 <- table(actual = test_data$Diabetes,
              predicted = tree5_pred)
 cm5
-#           predicted
+#         predicted
 # actual    No   Yes
-# No        28811 13929
-# Yes       1649  6346
+# No      31795 10945
+# Yes     2275  5720
 
 
 tree5_prob <- predict(tree5, newdata = test_data, type = "prob")
@@ -295,21 +290,21 @@ tree5_prob <- predict(tree5, newdata = test_data, type = "prob")
 eval5 <- compute_eval_metrics(cm5, test_data$Diabetes, tree5_prob[,2])
 eval5
 # precision    recall        F1     prauc 
-# 0.3129963 0.7937461 0.4489565 0.1164702 
+# 0.3432343 0.7154472 0.4639092 0.1903192 
 
 
 ####################################################################
 
-data.frame(rbind(eval2,eval4),row.names = c("down default","up default"))
-# precision    recall        F1     prauc
+data.frame(rbind(eval2,eval3),row.names = c("down default","rose default"))
+#             precision    recall        F1     prauc
 # down default 0.3102997 0.7706066 0.4424417 0.1132496
-# up default   0.3247831 0.7585991 0.4548352 0.1149385
+# rose default 0.3045448 0.7652283 0.4356929 0.1111096
 
 
-data.frame(rbind(eval3,eval5),row.names = c("down tuned","up tuned"))
-# precision    recall        F1     prauc
-# down tuned 0.3045448 0.7652283 0.4356929 0.1111096
-# up tuned   0.3129963 0.7937461 0.4489565 0.1164702
+data.frame(rbind(eval4,eval5),row.names = c("down tuned","rose tuned"))
+#             precision    recall        F1     prauc
+# down tuned 0.3247831 0.7585991 0.4548352 0.1149385
+# rose tuned 0.3432343 0.7154472 0.4639092 0.1903192
 
 
 
