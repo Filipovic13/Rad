@@ -402,25 +402,19 @@ summary(inside_resampling_en, metric = "F")
 #################################### 2nd balanced tuned #################################
 
 
-#### UPSAMPLE ###
-set.seed(33)
-up_balanced_train_data <- upSample(x = train_data[, -19],
-                                      y = train_data$Diabetes,
-                                      yname = "Diabetes")
-
-table(up_balanced_train_data$Diabetes)
-# No    Yes 
-# 170963 170963 
-
 
 ### LR2: upSample - tuned ###
 
-best_lambda <- down_0$bestTune$lambda
+best_lambda <- up_0$bestTune$lambda
 best_lambda
 
-lr2 <- down_0$finalModel
+lr2 <- up_0$finalModel
 
-lr2_prob <- predict(lr2, newx = model.matrix(data = test_data, Diabetes ~ .), s = best_lambda, type = 'response')
+
+lr2_prob <- predict(lr2, 
+                    newx = model.matrix(data = test_data, Diabetes ~ .), 
+                    s = best_lambda,
+                    type = 'response')
 
 lr2_pred <- ifelse(lr2_prob > 0.5, "Yes", "No")
 lr2_pred <- as.factor(lr2_pred)
@@ -432,14 +426,14 @@ cm2 <- table(actual = test_data$Diabetes,
 cm2
 #           predicted
 # actual    No   Yes
-# No      31077 11663
-# Yes     1942  6053
+# No      31081 11659
+# Yes     1949  6046
 
 
 eval2 <- compute_eval_metrics(cm2, test_data$Diabetes, lr2_prob)
 eval2
 # precision    recall        F1     prauc 
-# 0.3416685 0.7570982 0.4708491 0.4386014  
+# 0.3414855 0.7562226 0.4705058 0.4383580 
 
 
 #################################### 3rd threshold changed #################################
@@ -447,18 +441,9 @@ eval2
 library(pROC)
 
 
-predicted_probabilities <- cbind(1 - lr2_prob, lr2_prob)
-colnames(predicted_probabilities) <- c("No", "Yes")
-head(predicted_probabilities)
-
-length(predicted_probabilities[,2])
-length(test_data$Diabetes)
-
-
-
-lr2_roc <- roc(response = as.integer(test_data$Diabetes),predictor = predicted_probabilities[ ,2])
+lr2_roc <- roc(response = as.integer(test_data$Diabetes),predictor = lr2_prob)
 lr2_roc$auc
-
+# Area under the curve: 0.819
 
 
 plot.roc(lr2_roc,
@@ -476,21 +461,22 @@ closest_topleft_threshold <- closest_topleft_coords[1,1]
 closest_topleft_threshold
 
 
-lr2_pred2 <- ifelse(test=predicted_probabilities[ , 2] > closest_topleft_threshold, yes="Yes",no="No")
+lr2_pred2 <- ifelse(test = lr2_prob > closest_topleft_threshold, yes="Yes",no="No")
 lr2_pred2 <- as.factor(lr2_pred2)
 
 
 cm3 <- table(actual = test_data$Diabetes, 
              predicted = lr2_pred2)
 cm3
+#           predicted
 # actual    No   Yes
-# No     31043 11697
-# Yes    1927  6068
+# No      30854 11886
+# Yes     1889  6106
 
 eval3 <-  compute_eval_metrics(cm3, test_data$Diabetes, lr2_prob)
 eval3
 # precision    recall        F1     prauc 
-# 0.3415705 0.7589744 0.4711180 0.4386014 
+# 0.3393731 0.7637273 0.4699273 0.4383580 
 
 ##############################################
 
@@ -509,22 +495,23 @@ youdent_threshold <- youden_coords[1,1]
 youdent_threshold
 
 
-lr2_pred3 <- ifelse(test=predicted_probabilities[ , 2] > youdent_threshold, yes="Yes",no="No")
+lr2_pred3 <- ifelse(test=lr2_prob > youdent_threshold, yes="Yes",no="No")
 lr2_pred3 <- as.factor(lr2_pred3)
 
 
 cm4 <- table(actual = test_data$Diabetes, 
              predicted = lr2_pred3)
 cm4
+#           predicted
 # actual    No   Yes
-# No  28526 14214
-# Yes  1440  6555
+# No        29096 13644
+# Yes       1542  6453
 
 
 eval4 <-  compute_eval_metrics(cm4, test_data$Diabetes, lr2_prob)
 eval4
 # precision    recall        F1     prauc 
-# 0.3156146 0.8198874 0.4557781 0.4386014 
+# 0.3210927 0.8071295 0.4594191 0.4383580 
 
 ###################################################################
 
@@ -532,9 +519,9 @@ eval4
 
 
 data.frame(rbind(eval1,eval2,eval3, eval4),row.names = paste0("lr",1:4))
-#     precision    recall        F1     prauc
-# lr1 0.5619641 0.1803627 0.2730802 0.4408816   default imblanced
-# lr2 0.3416685 0.7570982 0.4708491 0.4386014   cv ridge
-# lr3 0.3415705 0.7589744 0.4711180 0.4386014   closest_topleft_threshold
-# lr4 0.3156146 0.8198874 0.4557781 0.4386014   youdent_threshold
+# precision    recall        F1     prauc
+# lr1 0.5619641 0.1803627 0.2730802 0.4408816   default imbalanced
+# lr2 0.3414855 0.7562226 0.4705058 0.4383580   ridge: up_0
+# lr3 0.3393731 0.7637273 0.4699273 0.4383580   closest_topleft_threshold
+# lr4 0.3210927 0.8071295 0.4594191 0.4383580   youdent_threshold
 
