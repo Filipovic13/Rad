@@ -67,27 +67,27 @@ Logistic regression is a **statistical method** used for **binary classification
 - While creating models using Cross-validation different regularization techniques were used (Lasso, Ridge, and Elastic Net).
 - Regularization improves model generalization, prevents overfitting, and handles multicollinearity by penalizing large coefficients.
   
-1. Lasso Regression (Least Absolute Shrinkage and Selection Operator)
-- **Purpose**: Performs variable selection by shrinking less important coefficients to zero.
-- **Penalty**: Adds the absolute value of coefficients (`L1 norm`) to the loss function:
-    - Loss = Residual Sum of Squares + λ ∑ ∣βj∣
-- **Key Feature**: Produces sparse models, making it easier to identify key predictors.
-  
-2. Ridge Regression
-- **Purpose**: Shrinks coefficients to prevent overfitting but retains all predictors.
-- **Penalty**: Adds the square of coefficients (`L2 norm`) to the loss function:
-  - Loss = Residual Sum of Squares + λ ∑βj2
-- **Key Feature**: Handles multicollinearity better and is less sensitive to small data changes.
+  1. Lasso Regression (Least Absolute Shrinkage and Selection Operator)
+  - **Purpose**: Performs variable selection by shrinking less important coefficients to zero.
+  - **Penalty**: Adds the absolute value of coefficients (`L1 norm`) to the loss function:
+      - Loss = Residual Sum of Squares + λ ∑ ∣βj∣
+  - **Key Feature**: Produces sparse models, making it easier to identify key predictors.
+    
+  2. Ridge Regression
+  - **Purpose**: Shrinks coefficients to prevent overfitting but retains all predictors.
+  - **Penalty**: Adds the square of coefficients (`L2 norm`) to the loss function:
+    - Loss = Residual Sum of Squares + λ ∑βj2
+  - **Key Feature**: Handles multicollinearity better and is less sensitive to small data changes.
 
-3. Elastic Net Regression
-- Purpose: Combines Lasso and Ridge penalties for better flexibility:
-  - Loss = Residual Sum of Squares + λ[α∑∣βj​∣+(1−α)∑βj2​]
-- Key Feature:
-  - Controlled by parameter α:
-    - α=1: Lasso
-    - α=0: Ridge
-    - 0<α<1: Elastic Net
-- Useful for datasets with highly correlated predictors.
+  3. Elastic Net Regression
+  - Purpose: Combines Lasso and Ridge penalties for better flexibility:
+    - Loss = Residual Sum of Squares + λ[α∑∣βj​∣+(1−α)∑βj2​]
+  - Key Feature:
+    - Controlled by parameter α:
+      - α=1: Lasso
+      - α=0: Ridge
+      - 0<α<1: Elastic Net
+  - Useful for datasets with highly correlated predictors.
 ---
 
 ### Created models:
@@ -96,12 +96,6 @@ Logistic regression is a **statistical method** used for **binary classification
   2. tuned balanced
   3. tuned balanced with threshold changed using closest topleft method
   4. tuned balanced with threshold changed using youden method
-
-# Diabetes Prediction Project
-
-This project focuses on building a classification model to predict whether a person has diabetes based on features like age, BMI, blood pressure, and other health-related indicators. 
-
-... (Your previous text here)
 
 ## Results of the models
 
